@@ -1,17 +1,32 @@
 import streamlit as st
 import datetime
+from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain_openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
 
 def get_current_time():
     return datetime.datetime.now().strftime("%H:%M")
 
-def main():
-    st.set_page_config(page_title="Streamlit Chat App", page_icon=":speech_balloon:")
+def initialize_agent_and_tools():
+    llm = OpenAI(temperature=0)
+    tools = load_tools(["serpapi"], llm=llm)
+    agent = initialize_agent(
+        tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+    )
+    return agent
 
-    st.title("Streamlit Chat App")
+def main():
+    st.set_page_config(page_title="Streamlit Chat App with Langchain", page_icon=":speech_balloon:")
+
+    st.title("Streamlit Chat App with Langchain")
 
     # Initialize session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "agent" not in st.session_state:
+        st.session_state.agent = initialize_agent_and_tools()
 
     # Display chat messages
     for message in st.session_state.messages:
@@ -37,8 +52,9 @@ def main():
             st.write(f"{user_name} - {get_current_time()}")
             st.write(user_input)
 
-        # Simulate a response (you can replace this with actual chat logic)
-        response = f"Echo: {user_input}"
+        # Get response from the agent
+        with st.spinner("Thinking..."):
+            response = st.session_state.agent.run(user_input)
         
         # Add response to chat history
         st.session_state.messages.append({
