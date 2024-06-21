@@ -3,19 +3,12 @@ import datetime
 from langchain.agents import AgentType, initialize_agent, load_tools
 from langchain_openai import OpenAI
 from dotenv import load_dotenv
+from bot import get_agent
 
 load_dotenv()  # take environment variables from .env.
 
 def get_current_time():
     return datetime.datetime.now().strftime("%H:%M")
-
-def initialize_agent_and_tools():
-    llm = OpenAI(temperature=0)
-    tools = load_tools(["serpapi"], llm=llm)
-    agent = initialize_agent(
-        tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
-    )
-    return agent
 
 def main():
     st.set_page_config(page_title="Streamlit Chat App with Langchain", page_icon=":speech_balloon:")
@@ -26,7 +19,7 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "agent" not in st.session_state:
-        st.session_state.agent = initialize_agent_and_tools()
+        st.session_state.agent = get_agent()
 
     # Display chat messages
     for message in st.session_state.messages:
